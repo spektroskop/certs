@@ -62,27 +62,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	var proc Processor = DayProcessor{}
-
 	if *verify {
-		proc = ChainProcessor{x509.NewCertPool()}
+		pool := x509.NewCertPool()
 
 		if *caGlob != "" {
 			cas, err := doublestar.Glob(*caGlob)
 			if err != nil {
 				logrus.Fatal(err)
 			}
+
 			for _, bundle := range util.Files(cas) {
 				if data, err := ioutil.ReadFile(bundle); err != nil {
 					logrus.Fatal(err)
 				} else {
-					proc.(ChainProcessor).Roots.AppendCertsFromPEM(data)
+					pool.AppendCertsFromPEM(data)
 				}
 			}
 		}
-	}
 
-	Run(files, proc)
+		Run(files, ChainProcessor{pool})
+	} else {
+		Run(files, DayProcessor{})
+	}
 }
 
 func Run(files []string, proc Processor) {
